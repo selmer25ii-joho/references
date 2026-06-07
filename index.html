@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10進数・2進数クイズシミュレーター (バランス調整版)</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 45px;
+            border-radius: 20px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 950px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 35px; font-size: 32px; }
+        
+        .bit-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 35px;
+        }
+        .bit-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 9%;
+        }
+        .bit-label {
+            font-size: 24px; /* 「2」のサイズを少し大きくしてベースを安定化 */
+            font-weight: bold;
+            color: #111;
+            margin-bottom: 12px;
+            white-space: nowrap;
+        }
+        /* ボタンの上の sup タグのバランス調整 */
+        .bit-label sup {
+            font-size: 16px; /* 「2」に対して一回り小さく */
+            color: #444;
+            font-weight: bold;
+            top: -0.4em; /* 少し高めの位置に上げて上付き感を強調 */
+        }
+        .bit-btn {
+            width: 100%;
+            padding: 22px 0;
+            font-size: 32px;
+            font-weight: bold;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .bit-btn.active {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .control-panel {
+            margin-bottom: 35px;
+        }
+        .toggle-show-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .toggle-show-btn:hover {
+            background-color: #218838;
+        }
+        .toggle-show-btn.hide-mode {
+            background-color: #6c757d;
+        }
+
+        .answer-area {
+            display: none;
+        }
+
+        .formula {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Helvetica Neue', Arial, monospace;
+            font-size: 26px; /* ベースの文字（2や×など）を少し大きめに */
+            color: #222;
+            text-align: left;
+            word-break: break-all;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        
+        /* ★解説欄の「上付き文字（何乗）」のバランスを最適化 */
+        .formula sup {
+            font-size: 18px;      /* ベースの26pxに対して、小さすぎず大きすぎない18pxに設定 */
+            font-weight: bold;    /* 潰れないように太字はキープ */
+            color: #333;          /* 落ち着いた黒色に戻す */
+            position: relative;
+            top: -0.4em;          /* 上付き文字として適切な高さに配置 */
+            padding: 0 1px;
+        }
+
+        .result {
+            font-size: 40px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .result sub {
+            font-size: 22px;
+            color: #555;
+            font-weight: normal;
+            bottom: -0.1em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>10ビット 2進数クイズ</h1>
+    
+    <div class="bit-container">
+        <div class="bit-box"><div class="bit-label">2<sup>9</sup></div><button class="bit-btn" onclick="toggleBit(9)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>8</sup></div><button class="bit-btn" onclick="toggleBit(8)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>7</sup></div><button class="bit-btn" onclick="toggleBit(7)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>6</sup></div><button class="bit-btn" onclick="toggleBit(6)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>5</sup></div><button class="bit-btn" onclick="toggleBit(5)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>4</sup></div><button class="bit-btn" onclick="toggleBit(4)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>3</sup></div><button class="bit-btn" onclick="toggleBit(3)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>2</sup></div><button class="bit-btn" onclick="toggleBit(2)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>1</sup></div><button class="bit-btn" onclick="toggleBit(1)">0</button></div>
+        <div class="bit-box"><div class="bit-label">2<sup>0</sup></div><button class="bit-btn" onclick="toggleBit(0)">0</button></div>
+    </div>
+
+    <div class="control-panel">
+        <button class="toggle-show-btn" id="showBtn" onclick="toggleAnswerShow()">答えを表示する</button>
+    </div>
+
+    <div class="answer-area" id="answerArea">
+        <div class="formula" id="formula1"></div>
+        <div class="formula" id="formula2"></div>
+        <div class="result" id="finalResult"></div>
+    </div>
+</div>
+
+<script>
+    let bits = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let isAnswerVisible = false;
+
+    function toggleBit(index) {
+        bits[index] = bits[index] === 0 ? 1 : 0;
+        
+        const buttons = document.querySelectorAll('.bit-btn');
+        const btnIndex = 9 - index; 
+        
+        if (bits[index] === 1) {
+            buttons[btnIndex].textContent = '1';
+            buttons[btnIndex].classList.add('active');
+        } else {
+            buttons[btnIndex].textContent = '0';
+            buttons[btnIndex].classList.remove('active');
+        }
+        
+        updateCalculation();
+    }
+
+    function toggleAnswerShow() {
+        const answerArea = document.getElementById('answerArea');
+        const showBtn = document.getElementById('showBtn');
+        
+        isAnswerVisible = !isAnswerVisible;
+        
+        if (isAnswerVisible) {
+            answerArea.style.display = 'block';
+            showBtn.textContent = '答えを隠す';
+            showBtn.classList.add('hide-mode');
+        } else {
+            answerArea.style.display = 'none';
+            showBtn.textContent = '答えを表示する';
+            showBtn.classList.remove('hide-mode');
+        }
+    }
+
+    function updateCalculation() {
+        let total = 0;
+        let expr1 = "計算式：";
+        let expr2 = "展開：";
+        let binaryStr = "";
+
+        for (let i = 9; i >= 0; i--) {
+            let weight = Math.pow(2, i);
+            let value = bits[i] * weight;
+            total += value;
+            binaryStr += bits[i];
+
+            expr1 += `(2<sup>${i}</sup> × ${bits[i]})`;
+            expr2 += `${value}`;
+            
+            if (i > 0) {
+                expr1 += " + ";
+                expr2 += " + ";
+            }
+        }
+
+        document.getElementById('formula1').innerHTML = expr1 + ` = ${total}`;
+        document.getElementById('formula2').innerHTML = `${expr2} = ${total}`;
+        document.getElementById('finalResult').innerHTML = `${binaryStr}<sub>(2)</sub> = ${total}<sub>(10)</sub>`;
+    }
+
+    updateCalculation();
+</script>
+
+</body>
+</html>
